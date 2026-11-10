@@ -14,5 +14,10 @@ venv/
 *.token.json
 post.txt
 
+# 本地渲染产物（卡片 PNG 落在 out/，不入库）
+out/
+card.png
+card.json
+
 # macOS
 .DS_Store

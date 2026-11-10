@@ -44,8 +44,17 @@ def build_html(cfg: dict) -> str:
     points = "\n".join(
         f'          <div><span>·</span>{p}</div>' for p in cfg["points"]
     )
+    trans1 = (cfg.get("trans1") or "").strip()
+    if not trans1:
+        raise SystemExit("缺少 trans1：卡片必须给出爻辞的白话译文")
+    trans2 = (cfg.get("trans2") or "").strip()
     src2 = cfg.get("src2") or ""
-    src2_block = f'        <div class="src2">{src2}</div>' if src2 else ""
+    src2_block = (
+        f'        <div class="src2">{src2}</div>\n'
+        f'        <div class="trans2">{trans2}</div>'
+    ) if src2 else ""
+    if src2 and not trans2:
+        src2_block = f'        <div class="src2">{src2}</div>'
     src3 = cfg.get("src3") or []
     src3_block = (
         f'        <div class="src3">{"<br>".join(src3)}</div>' if src3 else ""
@@ -61,6 +70,7 @@ def build_html(cfg: dict) -> str:
         "SEAL": cfg["seal"],
         "TITLE": "<br>".join(cfg["title"]),
         "SRC1": cfg["src1"],
+        "TRANS1": trans1,
         "SRC2_BLOCK": src2_block,
         "SRC3_BLOCK": src3_block,
         "POINTS": points,
