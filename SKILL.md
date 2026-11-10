@@ -12,7 +12,9 @@ description: 为《周易》某一卦某一爻生成可直发的 X（推特）�
 1. **一条 X 帖子** — 纯文本，直接在回复里用代码块给出，不写文件
 2. **一张横版知识卡片 PNG** — 1600×900，写入 `/workspace`，命名 `{卦名}{爻名}_知识卡片_封面.png`
 
-**明确不出**：竖版卡片、意境配图、纯净版／题款版、多版备选图、其他尺寸。一次一张图。
+**默认不发布到 X**：交付即止，帖子由人自行复制发布。只有用户明确要求「发到 X」、并已确认帖子与卡片内容后，才走 `references/publishing.md` 的可选流程（工作流第 7 步）。
+
+**明确不出**：竖版卡片、意境配图、纯净版／题款版、多版备选图、其他尺寸、自动／静默发布。一次一张图。
 
 卡片恒为帖子的**补充**：帖子主讲义理与处境，卡片承载卦象、原文、爻位。两者正文必须错开，只有帖子首行是有意重复的标识锚点。
 
@@ -23,7 +25,8 @@ description: 为《周易》某一卦某一爻生成可直发的 X（推特）�
 3. **核字数**：跑 `scripts/wlen.py`，必须 ≤280，建议 ≤275。超限就删句，不要扩写。
 4. **出卡片**：照 `assets/example_93.json` 填一份配置，跑 `scripts/render_card.py`。
 5. **复检**：用图片查看工具确认底部无裁切、要点与底行无重叠、朱红高亮在正确爻位、无乱码。
-6. **交付**：`present_files` 展示 PNG；帖子贴在回复里。
+6. **交付**：`present_files` 展示 PNG；帖子贴在回复里。默认到此结束。
+7. **可选 · 发布到 X**（仅当用户明确要求、且已逐字确认帖子与卡片）：按 `references/publishing.md` 走 dry-run → 人工确认 → `--send` → 回读，再给出帖子链接。绝不自动发布、不自动重试；无凭证时如实说明并停在第 6 步。
 
 ## 帖子硬规则
 
@@ -52,7 +55,9 @@ description: 为《周易》某一卦某一爻生成可直发的 X（推特）�
 ## 资源
 
 - `references/conventions.md` — 完整约定、风格细则、易学考据规则、任意卦的填写法
-- `references/examples.md` — 乾九二、乾九三 的完整成例
+- `references/examples.md` — 乾九二、乾九三、坤初六 的完整成例
+- `references/publishing.md` — 可选的 X 发布流程（GitHub 参考实现、授权与凭证、确认门禁、失败处理）
 - `scripts/wlen.py` — X 加权字数核算
 - `scripts/render_card.py` — 通用卡片生成器（读配置 → HTML → Chromium → 裁切）
+- `scripts/publish_x.py` — 可选发布脚本，默认 dry-run，显式 `--send` 才真发
 - `assets/card_template.html`、`assets/ink_bg.png`、`assets/example_92.json`、`assets/example_93.json`

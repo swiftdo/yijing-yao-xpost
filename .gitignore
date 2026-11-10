@@ -7,5 +7,12 @@ __pycache__/
 .venv/
 venv/
 
+# 本地凭证与待发布草稿（绝不入库）
+.env
+.env.*
+!.env.example
+*.token.json
+post.txt
+
 # macOS
 .DS_Store
