@@ -3,94 +3,155 @@
 <head>
 <meta charset="utf-8">
 <title>{{GUA_LABEL}} · {{TAG}}</title>
+<!--
+  版式：书叶（Book Leaf）
+  色彩取自内容自带的文化语境——竹纸、松烟墨、印泥朱批；有彩色只保留朱砂一种，
+  压低 chroma 取印刷油墨质感。朱砂只做两件事：标出本爻、盖一方印；其余层级全交给墨色明度。
+
+  借鉴自 alchaincyf/huashu-design：
+  · 中文与东亚设计 01 吕敬人书籍设计 —— 朱砂只用一处、版心呼吸、地脚留白、暖纸深墨
+  · 中文与东亚设计 02 宋刻本版式 —— 细版框、界栏取代卡片框、朱笔只点要读的那一处
+  · references/typography.md —— 中文标题字距归零、禁合成字形、避头尾、直角引号
+  · references/content-guidelines.md —— 删模板装饰（拉开字距的小标签）、删左彩条半透明卡片
+
+  改样式时务必保留：.bar.yin.hot 的透明底规则（否则朱红阴爻会变成整条实线）；
+  两栏内容总高须压在内容区内，底部对照行不能用绝对定位（会与要点重叠）。
+  设计说明见 references/card-design.md。
+-->
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  :root {
+    /* 纸 · 墨 · 朱砂：一组中性明度序列 + 一个有彩色 */
+    --paper:      #f4efe3;
+    --paper-warm: #f7f2e8;
+    --ink:        #2a2620;
+    --ink-2:      #4c463c;
+    --ink-3:      #6f685b;
+    --ink-4:      #8b8172;
+    --cinnabar:   #b03325;
+    --hair:       rgba(42,38,32,.16);
+    --font-serif: "Noto Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", "SimSun", serif;
+    --font-sans:  "Noto Sans SC", "Noto Sans CJK SC", "PingFang SC", "Heiti SC", sans-serif;
+  }
   body {
     width: 1600px; height: 900px; overflow: hidden;
-    font-family: "Noto Serif CJK SC", "Noto Serif CJK", serif;
-    color: #2f2c26;
+    font-family: var(--font-serif);
+    color: var(--ink);
+    font-synthesis: none;           /* 禁 faux bold / faux italic，中文字形不能被机械变形 */
+    line-break: strict;             /* 中文避头尾 */
     -webkit-font-smoothing: antialiased;
   }
-  .sans { font-family: "Noto Sans CJK SC", "Noto Sans CJK", sans-serif; }
-  .card { position: relative; width: 1600px; height: 900px; }
-  .bg { position: absolute; inset: 0; background: url("ink_bg.png") center center / cover no-repeat; }
+  .sans { font-family: var(--font-sans); }
+  .card { position: relative; width: 1600px; height: 900px; background: var(--paper); }
+
+  /* 水墨只在左半叶透出，右侧留净纸；交界大致落在两栏分隔线处，不像被洗掉半张图 */
+  .bg { position: absolute; inset: 0; background: url("ink_bg.png") left center / cover no-repeat; }
   .veil {
     position: absolute; inset: 0;
-    background: linear-gradient(90deg,
-      rgba(247,244,237,.56) 0%,
-      rgba(247,244,237,.68) 28%,
-      rgba(248,245,238,.90) 52%,
-      rgba(249,246,239,.965) 72%,
-      rgba(249,247,240,.98) 100%);
+    background:
+      radial-gradient(130% 120% at 50% 42%, rgba(255,255,255,0) 52%, rgba(112,98,74,.075) 100%),
+      linear-gradient(90deg,
+        rgba(244,239,227,.69) 0%,
+        rgba(244,239,227,.73) 33%,
+        rgba(246,241,231,.93) 43%,
+        rgba(247,242,232,.975) 52%,
+        rgba(247,242,232,.985) 100%);
   }
-  .content { position: absolute; inset: 56px 70px; display: flex; }
+  /* 宋刻本版框的轻量转译：一道细线，不抢内容 */
+  .frame { position: absolute; inset: 26px 34px; border: 1px solid var(--hair); pointer-events: none; }
+
+  /* 版心上提，地脚留白大于天头 */
+  .content { position: absolute; inset: 54px 76px 66px 76px; display: flex; }
   .left {
     width: 590px; flex-shrink: 0;
     padding-right: 48px;
-    border-right: 1px solid rgba(70,66,58,.22);
+    border-right: 1px solid var(--hair);
+    position: relative;
   }
   .right { flex: 1; padding-left: 56px; }
 
-  /* 左栏：卦象 */
-  .eyebrow { font-size: 23px; letter-spacing: .22em; color: #7d776b; }
-  .sub { font-size: 27px; letter-spacing: .1em; color: #565044; margin-top: 10px; }
-  .gua { margin-top: 48px; }
-  .yao { display: flex; align-items: center; height: 78px; }
+  /* 左栏：书眉 → 卦象 → 位置注记 */
+  .eyebrow { font-size: 21px; letter-spacing: .08em; color: var(--ink-3); }
+  .sub { font-size: 25px; letter-spacing: .02em; color: var(--ink-2); margin-top: 12px; }
+  .gua { margin-top: 42px; }
+  .yao { display: flex; align-items: center; height: 76px; }
   .bar {
-    width: 202px; height: 22px; flex-shrink: 0; border-radius: 2px;
-    background: linear-gradient(180deg, #4a463e, #37342e);
+    width: 202px; height: 20px; flex-shrink: 0; border-radius: 1px;
+    /* 两端略深，像毛笔起收，避免纯色块的塑料感 */
+    background:
+      linear-gradient(90deg, rgba(0,0,0,.11), transparent 6%, transparent 94%, rgba(0,0,0,.11)),
+      linear-gradient(180deg, #454037, #2b2822);
   }
   .bar.yin { background: none; display: flex; justify-content: space-between; }
   .bar.yin i {
-    display: block; width: 44%; height: 100%; border-radius: 2px;
-    background: linear-gradient(180deg, #4a463e, #37342e);
+    display: block; width: 44%; height: 100%; border-radius: 1px;
+    background: linear-gradient(180deg, #454037, #2b2822);
   }
-  .bar.hot { background: linear-gradient(180deg, #b34b3d, #9c3c31); }
-  /* 阴爻高亮时父容器必须保持透明，只让两段变红 */
+  /* 朱砂：全图第一处强音，只给本爻 */
+  .bar.hot {
+    background:
+      linear-gradient(90deg, rgba(0,0,0,.11), transparent 6%, transparent 94%, rgba(0,0,0,.11)),
+      linear-gradient(180deg, #c03c2c, #9c2b1f);
+  }
+  /* 阴爻高亮时父容器必须保持透明，只让两段变红 —— 不要删 */
   .bar.yin.hot { background: none; }
-  .bar.yin.hot i { background: linear-gradient(180deg, #b34b3d, #9c3c31); }
-  .name { font-size: 27px; margin-left: 28px; width: 82px; color: #474239; }
-  .name.hot { color: #a64236; }
-  .note { font-size: 20px; color: #8a8478; letter-spacing: .04em; white-space: nowrap; }
-  .note.hot { color: #a64236; font-weight: 600; }
-  .split { height: 44px; display: flex; align-items: center; gap: 16px; }
-  .split .dash { width: 202px; border-top: 1px dashed rgba(90,84,74,.6); }
-  .split .lab { font-size: 19px; color: #827c70; letter-spacing: .08em; white-space: nowrap; }
-  .foot { margin-top: 24px; font-size: 21px; line-height: 2; color: #6e685d; }
-  .foot b { font-weight: 500; color: #a64236; }
+  .bar.yin.hot i { background: linear-gradient(180deg, #c03c2c, #9c2b1f); }
+  .name { font-size: 26px; margin-left: 28px; width: 82px; color: var(--ink-2); }
+  .name.hot { color: var(--cinnabar); font-weight: 600; }
+  .note { font-size: 19px; color: var(--ink-4); letter-spacing: 0; white-space: nowrap; }
+  .note.hot { color: var(--cinnabar); font-weight: 600; }
+  .split { height: 42px; display: flex; align-items: center; gap: 16px; }
+  .split .dash { width: 202px; border-top: 1px dashed rgba(90,84,74,.45); }
+  .split .lab { font-size: 18px; color: var(--ink-4); letter-spacing: .02em; white-space: nowrap; }
+  .foot { margin-top: 26px; font-size: 20px; line-height: 1.9; color: var(--ink-3); }
+  /* 用中文原生着重号代替朱红高亮：把红色留给本爻，也不用链接式下划线 */
+  .foot b {
+    font-weight: 600; color: var(--ink);
+    text-emphasis: filled dot;
+    text-emphasis-position: under right;
+  }
 
-  /* 右栏：爻解 */
-  .topline { display: flex; justify-content: space-between; align-items: center; }
-  .tag { display: flex; align-items: center; gap: 14px; font-size: 24px; letter-spacing: .2em; color: #5b554b; }
-  .tag i { width: 15px; height: 15px; background: #a64236; display: block; }
+  /* 右栏：书眉 + 朱印 → 爻辞标题 → 原文 → 所处之位 → 对照 */
+  .topline { display: flex; justify-content: space-between; align-items: flex-start; }
+  .tag { display: flex; align-items: center; gap: 14px; font-size: 21px; letter-spacing: .1em; color: var(--ink-3); padding-top: 8px; }
+  .tag i { width: 22px; height: 1px; background: var(--ink-4); display: block; }
+  /* 朱砂：全图第二处强音，一方印 */
   .seal {
-    width: 46px; height: 46px; background: #a64236; color: #f7f1e6;
+    width: 48px; height: 48px; background: var(--cinnabar); color: #f7f1e6;
     display: flex; align-items: center; justify-content: center;
-    font-size: 27px; line-height: 1; border-radius: 2px;
+    font-size: 28px; line-height: 1; border-radius: 1px;
+    border: 2px solid rgba(247,241,230,.5);
   }
   .title {
-    margin-top: 20px; font-size: 68px; line-height: 1.22;
-    letter-spacing: .09em; color: #292620; font-weight: 500;
+    margin-top: 16px; font-size: 70px; line-height: 1.28;
+    letter-spacing: -.01em; color: var(--ink); font-weight: 600;
+    text-wrap: balance;
   }
-  .rule { height: 1px; background: rgba(70,66,58,.22); margin: 18px 0 16px; }
-  .label { font-size: 22px; letter-spacing: .26em; color: #a64236; margin-bottom: 12px; }
+  .rule { height: 1px; background: var(--hair); margin: 20px 0 18px; }
+  /* 书眉式小标题：正常中文字距 + 一道界栏细线，不用拉开的模板标签 */
+  .label {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 20px; letter-spacing: 0; color: var(--ink-3); margin-bottom: 12px;
+  }
+  /* 短引线而不是通栏横线：界栏感，不像表单下划线 */
+  .label::after { content: ""; width: 56px; flex: none; height: 1px; background: var(--hair); }
+  /* 界栏：替代半透明白底 + 左红彩条的 AI 卡片签名 */
   .srcbox {
-    background: rgba(255,255,255,.48);
-    border-left: 3px solid #a64236;
-    padding: 16px 24px 18px;
+    border-left: 1px solid rgba(42,38,32,.3);
+    padding: 2px 0 2px 24px;
   }
-  .src1 { font-size: 31px; letter-spacing: .04em; color: #2f2b24; }
-  .src2 { font-size: 26px; color: #4e4a42; margin-top: 12px; letter-spacing: .03em; }
-  .src3 { font-size: 23px; color: #5c574d; line-height: 1.55; margin-top: 10px; letter-spacing: .01em; }
-  .pos { margin-top: 20px; }
-  .points { font-size: 25px; line-height: 1.72; color: #3b372f; }
+  .src1 { font-size: 32px; letter-spacing: .01em; color: var(--ink); line-height: 1.5; }
+  .src2 { font-size: 25px; color: var(--ink-2); margin-top: 10px; letter-spacing: .01em; }
+  .src3 { font-size: 22px; color: var(--ink-3); line-height: 1.7; margin-top: 8px; text-wrap: pretty; }
+  .pos { margin-top: 22px; }
+  .points { font-size: 24px; line-height: 1.85; color: var(--ink-2); }
   .points div { white-space: nowrap; }
-  .points span { color: #a64236; margin-right: 12px; }
+  .points span { color: var(--ink-4); margin-right: 14px; }
   .bottom {
-    margin-top: 26px; padding-top: 14px;
-    border-top: 1px solid rgba(70,66,58,.2);
-    font-size: 21px; letter-spacing: .06em; color: #7b7568;
+    margin-top: 30px; padding-top: 16px;
+    border-top: 1px solid var(--hair);
+    font-size: 20px; letter-spacing: .02em; color: var(--ink-3);
   }
 </style>
 </head>
@@ -98,6 +159,7 @@
 <div class="card">
   <div class="bg"></div>
   <div class="veil"></div>
+  <div class="frame"></div>
   <div class="content">
 
     <div class="left">
@@ -122,7 +184,7 @@
 
       <div class="rule"></div>
 
-      <div class="label sans">原 文</div>
+      <div class="label sans">原文</div>
       <div class="srcbox">
         <div class="src1">{{SRC1}}</div>
 {{SRC2_BLOCK}}
@@ -130,7 +192,7 @@
       </div>
 
       <div class="pos">
-        <div class="label sans">所 处 之 位</div>
+        <div class="label sans">所处之位</div>
         <div class="points">
 {{POINTS}}
         </div>

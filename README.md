@@ -31,6 +31,7 @@ yijing-yao-xpost/
 ├── SKILL.md                          Skill 入口：触发条件、交付物、6 步工作流 + 可选发布、硬规则与坑
 ├── references/
 │   ├── conventions.md                完整规范：图文分工、字数规则、版式、考据、配置字段、踩坑清单
+│   ├── card-design.md                卡片视觉依据：借鉴来源、色彩推导、排印规则、改样式红线
 │   ├── examples.md                   乾九二 / 乾九三 / 坤初六 三份完整成例
 │   └── publishing.md                 可选：发布到 X 的流程、GitHub 参考实现、授权与确认门禁
 ├── scripts/
@@ -38,7 +39,7 @@ yijing-yao-xpost/
 │   ├── render_card.py                配置 JSON → HTML → Chromium 截图 → 裁成 1600×900 PNG
 │   └── publish_x.py                  可选：默认 dry-run 的发布脚本，--send 才真发
 └── assets/
-    ├── card_template.html            卡片 HTML/CSS 模板，{{占位符}} 由脚本替换
+    ├── card_template.html            卡片 HTML/CSS 模板（书叶版式），{{占位符}} 由脚本替换
     ├── ink_bg.png                    水墨底图（1536×944，已裁掉平台水印，不要再调图像生成）
     ├── example_92.json               乾九二配置：阳爻 · 得中
     ├── example_93.json               乾九三配置：阳爻 · 危地
@@ -77,7 +78,7 @@ git clone git@github.com:swiftdo/yijing-yao-xpost.git <项目>/.workbuddy/skills
 | Python 3.8+ | 两个脚本 | `python3 -V` |
 | Pillow | 截图后裁成 1600×900 | `python3 -c "import PIL; print(PIL.__version__)"` |
 | `chromium` 或 `google-chrome` 在 `PATH` 中 | HTML → 无头截图 | `command -v chromium \|\| command -v google-chrome` |
-| Noto Serif CJK SC / Noto Sans CJK SC | 中文排版（缺了会回退系统字体，中文仍可读但字形有差） | `fc-list \| grep "Noto Serif CJK SC"`（Linux） |
+| Noto Serif CJK SC / Noto Sans CJK SC（可选） | 中文排版；模板按 `Noto → Songti SC → 系统中文衬线` 回退，未装 Noto 实测中文仍清晰、字形略有差 | `fc-list \| grep "Noto Serif CJK SC"`（Linux） |
 
 ```bash
 python3 -m pip install Pillow
@@ -129,9 +130,11 @@ python3 scripts/render_card.py my_yao.json --out ./my_yao.png
 
 脚本会把配置填进 `card_template.html`，把底图与 HTML 放进同一临时目录，用 Chromium `--headless=new` 截 1600×1000 的图，最后 `crop(0,0,1600,900)` 输出 PNG。
 
+模板是「书叶」版式：细版框、上提的版心与留大的地脚，水墨只在左半叶透出；配色只有**纸／四级墨／朱砂**，朱砂严格只给本爻与朱印两处，其余层级靠墨色明度与字重。设计依据、借鉴出处（[alchaincyf/huashu-design](https://github.com/alchaincyf/huashu-design)）与改样式红线见 `references/card-design.md`，改 CSS 前先读。
+
 ### 4. 复检（别省）
 
-打开生成的 PNG，确认：底部对照行完整无裁切、要点与底行不重叠、朱红高亮落在正确爻位、中文无乱码。任一不符先改配置或模板，再重跑。
+打开生成的 PNG，确认：底部对照行完整无裁切、要点与底行不重叠、朱砂高亮落在正确爻位（阴爻要断成两段）、朱砂只出现在两处、中文无乱码。任一不符先改配置或模板，再重跑。
 
 ## 完整样例 · 串起来跑一遍「乾卦九三」
 
@@ -221,9 +224,9 @@ python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
 # (1600, 900)
 ```
 
-打开 `card.png` 逐项确认：朱红落在九三（虚线分界下方第一条）而其余五爻为深灰；底部「对照：九二… → 九三…」完整、不与三条要点重叠；中文无方框乱码。本例四项均通过。
+打开 `card.png` 逐项确认：朱砂落在九三（虚线分界下方第一条）而其余五爻为墨色；朱砂除本爻外只出现在右上角朱印；底部「对照：九二… → 九三…」完整、不与三条要点重叠；中文无方框乱码。本例均通过。
 
-**6 · 交付**：把 `post.txt` 全文复制进 X 编辑框，`card.png` 作为附图上传。**默认流程到此结束。** 实测产物：`post.txt` 397 B、`card.json` 1.4 KiB、`card.png` 1.02 MiB。
+**6 · 交付**：把 `post.txt` 全文复制进 X 编辑框，`card.png` 作为附图上传。**默认流程到此结束。** 实测产物：`post.txt` 397 B、`card.json` 1.4 KiB、`card.png` 0.86 MiB。
 
 **7 ·（可选）发布前先 dry-run**
 
@@ -236,7 +239,7 @@ python3 "$REPO/scripts/publish_x.py" --text-file post.txt --image ./card.png
 （此处原样打印 post.txt 全文）
 --------------------
 加权字符：267 / 280（X 按 CJK 每字 2 计）
-附图：card.png（1.02 MiB）
+附图：card.png（0.86 MiB）
 [dry-run] 检查通过：长度 OK / 图片 OK / 未读取凭证 / 未联网
 [dry-run] 将执行：users/me 校验（可选）→ 媒体上传 → POST /2/tweets → 回读
 [dry-run] 没有发送任何内容。人工确认后加 --send 才会发布。
@@ -329,6 +332,7 @@ python3 "$REPO/scripts/publish_x.py" --text-file post.txt --image ./card.png --s
 | 照抄一条从输入到成品的完整命令流程 | 上文「完整样例」 |
 | 改触发条件、交付物、工作流 | `SKILL.md` |
 | 查完整规范、版式参数、全部字段、踩坑清单 | `references/conventions.md` |
+| 改卡片配色、字体、版式，或想看设计依据 | `references/card-design.md` + `assets/card_template.html` |
 | 照着写一条新帖 / 换卦步骤 | `references/examples.md` |
 | 把内容发布到 X（可选流程） | `references/publishing.md` + `scripts/publish_x.py` |
 | 仓库地址 | `git@github.com:swiftdo/yijing-yao-xpost.git` |
