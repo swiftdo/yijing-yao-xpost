@@ -105,17 +105,14 @@
 ## 8. 复检
 
 ```bash
-# 本机需 wrapper（Chrome.app 不在 PATH）与 homebrew python（默认 python3 无 Pillow）
-TMPBIN=$(mktemp -d)
-printf '#!/bin/sh\nexec "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" "$@"\n' > "$TMPBIN/google-chrome"
-chmod +x "$TMPBIN/google-chrome"
-for cfg in example_93 example_92 example_kun_chuliu; do
-  PATH="$TMPBIN:$PATH" /opt/homebrew/bin/python3 scripts/render_card.py \
+# 本机用 homebrew python（默认 python3 无 Pillow）；浏览器脚本自行查找，无需 wrapper
+for cfg in example_93 example_92 example_kun_chuliu example_94; do
+  /opt/homebrew/bin/python3 scripts/render_card.py \
     "assets/$cfg.json" --out "/tmp/${cfg}.png"
 done
 ```
 
-看四件事：本爻朱红在正确爻位（坤初六要断成两段）、底部对照行完整不重叠、中文无乱码方框、无明显溢出。三份示例刻意覆盖阳爻危地／阳爻得中／阴爻初爻且无前爻。
+看四件事：本爻朱红在正确爻位（坤初六要断成两段）、底部对照行完整不重叠、中文无乱码方框、无明显溢出。四份示例刻意覆盖阳爻危地／阳爻得中／阴爻初爻且无前爻／阳爻临界。
 
 ## 9. 没有采纳的方向
 

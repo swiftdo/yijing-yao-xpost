@@ -88,26 +88,37 @@ git clone git@github.com:swiftdo/yijing-yao-xpost.git <项目>/.workbuddy/skills
 |---|---|---|
 | Python 3.8+ | 两个脚本 | `python3 -V` |
 | Pillow | 截图后裁成 1600×900 | `python3 -c "import PIL; print(PIL.__version__)"` |
-| `chromium` 或 `google-chrome` 在 `PATH` 中 | HTML → 无头截图 | `command -v chromium \|\| command -v google-chrome` |
+| 一个 Chromium 系浏览器 | HTML → 无头截图 | `python3 -c "import sys; sys.path.insert(0,'scripts'); from render_card import find_browser; print(find_browser())"` |
 | Noto Serif CJK SC / Noto Sans CJK SC（可选） | 中文排版；模板按 `Noto → Songti SC → 系统中文衬线` 回退，未装 Noto 实测中文仍清晰、字形略有差 | `fc-list \| grep "Noto Serif CJK SC"`（Linux） |
 
 ```bash
 python3 -m pip install Pillow
 ```
 
-`render_card.py` 用 `shutil.which("chromium") or shutil.which("google-chrome")` 找浏览器，找不到就报错退出；它**不会**自动发现 macOS 的 `Google Chrome.app`。macOS 上请放一个 wrapper 到 `PATH`：
+**推荐装一个专用无头构建**（不与日常浏览器共用 profile，最快也最不会出事）：
 
 ```bash
-mkdir -p ~/.local/bin
-cat > ~/.local/bin/google-chrome <<'EOF'
-#!/bin/sh
-exec "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" "$@"
-EOF
-chmod +x ~/.local/bin/google-chrome
-export PATH="$HOME/.local/bin:$PATH"   # 想长期生效就写进 ~/.zshrc
+npx --yes @puppeteer/browsers install chrome-headless-shell@stable
 ```
 
-> 不要直接给 Chrome.app 里的二进制建软链：Chrome 会按自身路径去找 `Google Chrome Framework.framework`，软链会导致 `dlopen` 失败并以 SIGABRT 退出。用上面的 wrapper 脚本 `exec` 真实路径即可。
+`render_card.py` 按这个顺序找浏览器，第一个能用就用：
+
+1. `--chrome /path/to/browser` 参数
+2. `CHROME_BIN` 环境变量
+3. `PATH` 里的 `chrome-headless-shell` / `chromium` / `chromium-browser` / `google-chrome`
+4. puppeteer、playwright 缓存里的无头构建
+5. macOS 的 `Chromium.app` / `Google Chrome Canary.app` / `Google Chrome.app`
+
+macOS 上第 5 步能直接命中 `Google Chrome.app`，**不需要再建 wrapper**。若你的机器上 Chrome 装在别处，用 `CHROME_BIN` 指过去即可：
+
+```bash
+CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  python3 scripts/render_card.py assets/example_93.json --out ./card.png
+```
+
+> **别给 Chrome.app 里的二进制建软链**：Chrome 会按自身路径去找 `Google Chrome Framework.framework`，软链会导致 `dlopen` 失败并以 SIGABRT 退出。要自定义路径就写个 `exec` 真路径的 wrapper 脚本，或用 `CHROME_BIN`。
+
+> **为什么每次渲染都用一个临时 profile**：脚本固定传 `--user-data-dir=<临时目录>/profile`。不隔离的话，无头进程会和正在运行的 Chrome 抢同一个 profile 的单例锁，触发 Chrome 的 CHECK 断言——表现就是**跑一次卡片，Chrome 崩一次**，崩溃报告里进程名还写着「Google Chrome」。详见 `references/conventions.md` 第 7 节第 9 条。
 
 输出路径默认是 `/workspace/<配置里的 out>`（脚本会自动建目录）。在根目录不可写的机器上请显式传 `--out`，别用默认值：
 
@@ -221,13 +232,11 @@ python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
 # 已生成: card.png (1600x900)
 ```
 
-> 本机 macOS 实测时，默认 `python3` 没有 Pillow、Chrome.app 也不在 `PATH`，上面这条会失败。按「1. 环境」配好 wrapper 后，等价的实测命令是：
+> 本机 macOS 实测时默认 `python3` 没有 Pillow，请用 `/opt/homebrew/bin/python3`。浏览器不用额外配——脚本会自己找到 `Google Chrome.app`；装了 `chrome-headless-shell` 则优先用它。等价的实测命令：
 >
 > ```bash
-> TMPBIN=$(mktemp -d)
-> printf '#!/bin/sh\nexec "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" "$@"\n' > "$TMPBIN/google-chrome"
-> chmod +x "$TMPBIN/google-chrome"
-> PATH="$TMPBIN:$PATH" /opt/homebrew/bin/python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
+> /opt/homebrew/bin/python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
+> # 已生成: .../card.png (1600x900)｜浏览器: chrome-headless-shell
 > ```
 
 **5 · 看图复检**（别只信「已生成」）

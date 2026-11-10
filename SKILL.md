@@ -57,6 +57,7 @@ description: 为《周易》某一卦某一爻生成可直发的 X（推特）�
 ## 已知坑（必读）
 
 - Chromium 无头模式 `--window-size=1600,1000` 实际可视高约 913 → 卡片按 900 设计并裁 `crop(0,0,1600,900)`，脚本已处理
+- **无头进程绝不能沿用日常 Chrome 的 profile**：会与运行中的 Chrome 抢单例锁，Chrome 断言失败秒退，用户看到自己的浏览器崩了。`render_card.py` 已固定传临时 `--user-data-dir` 并优先用 `chrome-headless-shell`；**别删这两处**，也别把真实 profile 路径塞进去
 - 底部行不要用 `position:absolute; bottom:0`（文本变长会与要点重叠）→ 模板已改为正常文档流
 - 加了译文后右栏只剩约 40px 余量：`trans1` 超过一行、或《文言》拿到两行，底部对照行就会被 `crop` 切掉。译文写不短就改措辞，别缩字号，也别删「所处之位」
 - 底图右下角平台「AI生成」水印已裁掉，直接用 `assets/ink_bg.png`；不要再调图像生成（省积分）
