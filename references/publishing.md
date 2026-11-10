@@ -63,7 +63,7 @@ token 过期后用 refresh token 重新换取；不要把刷新逻辑塞进生�
 ### 步骤 2 · 备好内容
 
 ```bash
-# 帖子存成纯文本文件（首行、正文、图文钩子、标签一并保留）
+# 帖子存成纯文本文件（首行、正文、标签一并保留；不写看图提示）
 python3 scripts/wlen.py post.txt                     # 必须 ≤280，建议 ≤275
 # 卡片渲染到可写路径（本机 / 不可写，别用 SKILL.md 里默认的 /workspace）
 python3 scripts/render_card.py assets/example_93.json --out ./card.png
