@@ -4,11 +4,12 @@
 用法:
   python3 render_card.py <config.json> [--out /abs/path/output.png] [--chrome /path/to/browser]
 
-不传 --out 时输出到 /workspace/<config.out>。
+不传 --out 时输出到 out/<config.out>（相对当前工作目录）。
 配置字段见 references/conventions.md 第 6 节。
 
-浏览器查找顺序：--chrome → CHROME_BIN → PATH 里的 chrome-headless-shell /
-chromium / google-chrome → puppeteer、playwright 的缓存构建 → macOS App。
+浏览器查找顺序：--chrome → CHROME_BIN → puppeteer、playwright 缓存里的无头构建
+→ PATH 里的 chrome-headless-shell / chromium / google-chrome → playwright 缓存的
+完整 Chromium → macOS App。
 每次渲染都在临时目录里新建 user-data-dir，绝不碰日常浏览器的 profile。
 """
 from __future__ import annotations
@@ -48,9 +49,18 @@ MAC_BUNDLES = [
 def build_html(cfg: dict) -> str:
     tpl = (ASSETS / "card_template.html").read_text(encoding="utf-8")
 
+    lines = cfg["yao_lines"]
+    if len(lines) != 6:
+        raise SystemExit(f"yao_lines 必须正好 6 行（自上而下），当前 {len(lines)} 行")
+    hot_from_bottom = cfg["hot_from_bottom"]
+    if (isinstance(hot_from_bottom, bool)
+            or not isinstance(hot_from_bottom, int)
+            or not 1 <= hot_from_bottom <= 6):
+        raise SystemExit("hot_from_bottom 必须是 1～6 的整数")
+
     rows = []
-    for i, ln in enumerate(cfg["yao_lines"]):
-        hot = (i == 6 - cfg["hot_from_bottom"])
+    for i, ln in enumerate(lines):
+        hot = (i == 6 - hot_from_bottom)
         cls = " hot" if hot else ""
         note = cfg["hot_note"] if hot else ln.get("note", "")
         if ln.get("yin"):
@@ -76,12 +86,12 @@ def build_html(cfg: dict) -> str:
         raise SystemExit("缺少 trans1：卡片必须给出爻辞的白话译文")
     trans2 = (cfg.get("trans2") or "").strip()
     src2 = cfg.get("src2") or ""
+    if src2 and not trans2:
+        raise SystemExit("缺少 trans2：有《象》原文时必须给出白话译文")
     src2_block = (
         f'        <div class="src2">{src2}</div>\n'
         f'        <div class="trans2">{trans2}</div>'
     ) if src2 else ""
-    if src2 and not trans2:
-        src2_block = f'        <div class="src2">{src2}</div>'
     src3 = cfg.get("src3") or []
     src3_block = (
         f'        <div class="src3">{"<br>".join(src3)}</div>' if src3 else ""
@@ -111,7 +121,7 @@ def build_html(cfg: dict) -> str:
 
 
 def find_browser(explicit: str | None = None) -> str:
-    """按「专用无头构建 → PATH → macOS App」的顺序找浏览器。"""
+    """按「专用无头构建 → PATH → 完整 Chromium → macOS App」的顺序找浏览器。"""
     if explicit:
         if Path(explicit).is_file():
             return explicit
@@ -161,12 +171,12 @@ def _tempdir():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("config", help="配置 JSON 路径")
-    ap.add_argument("--out", help="输出 PNG 绝对路径（默认 /workspace/<out>）")
+    ap.add_argument("--out", help="输出 PNG 路径（默认 out/<out>）")
     ap.add_argument("--chrome", help="指定浏览器可执行文件（也可用 CHROME_BIN）")
     args = ap.parse_args()
 
     cfg = json.loads(Path(args.config).read_text(encoding="utf-8"))
-    out = Path(args.out) if args.out else Path("/workspace") / cfg["out"]
+    out = Path(args.out) if args.out else Path("out") / cfg["out"]
     out.parent.mkdir(parents=True, exist_ok=True)
     html = build_html(cfg)
 
@@ -224,7 +234,13 @@ def main():
             )
 
         from PIL import Image
-        Image.open(raw).crop((0, 0, 1600, 900)).save(out)
+        with Image.open(raw) as img:
+            if img.width < 1600 or img.height < 900:
+                raise SystemExit(
+                    f"截图尺寸 {img.width}x{img.height} 小于 1600x900，"
+                    "浏览器没有按 --window-size 渲染"
+                )
+            img.crop((0, 0, 1600, 900)).save(out)
 
     print(f"已生成: {out} (1600x900)｜浏览器: {Path(browser).name}")
 

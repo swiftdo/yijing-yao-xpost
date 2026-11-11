@@ -108,6 +108,8 @@ def multipart(fields: dict, filename: str, chunk: bytes, mime: str):
 def upload_image(path: Path, token: str) -> str:
     """X API v2 chunked media upload: INIT -> APPEND -> FINALIZE -> (STATUS)。"""
     total = path.stat().st_size
+    if total == 0:
+        raise SystemExit("图片为空，已中止")
     mime = MEDIA_TYPES[path.suffix.lower()]
     url = f"{API}/2/media/upload"
 
@@ -138,8 +140,6 @@ def upload_image(path: Path, token: str) -> str:
             sent += len(chunk)
             index += 1
             print(f"[media] APPEND {sent}/{total} bytes")
-        if total == 0:  # 空文件也在 INIT 阶段就该被拦下，这里兜底
-            raise SystemExit("图片为空，已中止")
 
     status, data = http("POST", url, token, params={
         "command": "FINALIZE", "media_id": media_id,
@@ -174,8 +174,11 @@ def main() -> None:
     src.add_argument("--text-file", help="从文件读帖子全文")
     ap.add_argument("--image", help="知识卡片 PNG 路径（可选，不带则发纯文本帖）")
     ap.add_argument("--send", action="store_true", help="真正发送；默认只预览不联网")
-    ap.add_argument("--expect-user", help="发送前校验当前账号 handle，防发错号")
+    ap.add_argument("--expect-user", help="发送前校验当前账号 handle，防发错号；--send 时必填")
     args = ap.parse_args()
+
+    if args.send and not args.expect_user:
+        raise SystemExit("--send 必须同时给 --expect-user：不校验账号就不许真发（防发错号）")
 
     text = (Path(args.text_file).read_text(encoding="utf-8")
             if args.text_file else args.text).rstrip("\n")
@@ -201,8 +204,7 @@ def main() -> None:
     print("----- 帖子预览 -----")
     print(text)
     print("--------------------")
-    print(f"加权字符：{n} / {MAX_WEIGHTED}"
-          + ("（X 按 CJK 每字 2 计）" if n else ""))
+    print(f"加权字符：{n} / {MAX_WEIGHTED}（X 按 CJK 每字 2 计）")
     if image:
         print(f"附图：{image}（{size / 1024 / 1024:.2f} MiB）")
 
@@ -210,7 +212,8 @@ def main() -> None:
         checks = "长度 OK / " + ("图片 OK / " if image else "无附图 / ") \
                  + "未读取凭证 / 未联网"
         print(f"[dry-run] 检查通过：{checks}")
-        print("[dry-run] 将执行：users/me 校验（可选）→ 媒体上传 → POST /2/tweets → 回读")
+        steps = "users/me 校验（可选）→ 媒体上传 → " if image else "users/me 校验（可选）→ "
+        print(f"[dry-run] 将执行：{steps}POST /2/tweets → 回读")
         print("[dry-run] 没有发送任何内容。人工确认后加 --send 才会发布。")
         return
 

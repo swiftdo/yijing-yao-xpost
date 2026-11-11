@@ -6,11 +6,18 @@
   python3 wlen.py post.txt
   cat post.txt | python3 wlen.py -
 """
+import re
 import sys
 from pathlib import Path
 
+# twitter-text 把每个链接都折算成 t.co 的 23 个字符，与实际长度无关。
+TCO_LEN = 23
+URL_RE = re.compile(r"(?:https?://|www\.)[!-~]+", re.IGNORECASE)
+# 紧跟在链接后面的标点不算链接的一部分，仍按普通字符计。
+TRAILING = ".,;:!?)]}'\u3002\uff0c\uff1b\uff1a\uff01\uff1f\u300d\u300f\uff09"
 
-def wlen(s: str) -> int:
+
+def _weighted(s: str) -> int:
     total = 0
     for ch in s:
         cp = ord(ch)
@@ -22,6 +29,16 @@ def wlen(s: str) -> int:
     return total
 
 
+def wlen(s: str) -> int:
+    total, pos = 0, 0
+    for m in URL_RE.finditer(s):
+        total += _weighted(s[pos:m.start()])
+        url = m.group().rstrip(TRAILING)
+        total += TCO_LEN + _weighted(m.group()[len(url):])
+        pos = m.end()
+    return total + _weighted(s[pos:])
+
+
 def main():
     if len(sys.argv) > 1:
         arg = sys.argv[1]
@@ -29,6 +46,9 @@ def main():
             text = sys.stdin.read()
         elif Path(arg).is_file():
             text = Path(arg).read_text(encoding="utf-8")
+        elif Path(arg).suffix.lower() in {".txt", ".md"}:
+            # 防止把文件名当成帖子正文核算：文件不存在时直接报错，别静默放行
+            raise SystemExit(f"文件不存在：{arg}")
         else:
             text = arg
     else:
