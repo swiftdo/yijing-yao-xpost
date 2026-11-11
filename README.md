@@ -6,7 +6,7 @@
 |---|---|
 | 类型 | Agent Skill（`SKILL.md` frontmatter 驱动），脚本也可独立运行 |
 | 输入 | `乾卦九三`、`坤卦初六` …… 只需卦名 + 爻位 |
-| 输出 | 帖子纯文本（贴在回复里，不落盘）＋ 1 张 PNG 卡片 |
+| 输出 | 帖子纯文本（贴在回复里；默认不落盘，走发布流程才写 `post.txt`）＋ 1 张 PNG 卡片 |
 | 规范源 | `SKILL.md`（触发与工作流）、`references/conventions.md`（完整约定） |
 
 ## 它做什么
@@ -16,7 +16,7 @@
 | | 承担 | 不承担 |
 |---|---|---|
 | 帖子 | 首行标识、误读纠偏、当下处境、具体动作与画面 | 卦象图、爻位术语、《象》《文言》原文、逐句译文、看图提示、说教口吻 |
-| 卡片 | 六爻卦图、本爻朱红高亮、爻辞与传文原文**及其白话译文**、「所处之位」三条、对照行 | 抒情、金句、帖子的白话义理 |
+| 卡片 | 六爻卦图、本爻朱红高亮、爻辞与《象》原文**及其白话译文**、《文言》节引、「所处之位」三条、对照行 | 抒情、金句、帖子的白话义理 |
 
 **译文只上卡片**：帖子只有 280 加权字符，装不下逐句译文；卡片用古籍经注格式——原文大字、译文小字紧随其下。帖子里凡引文言词句，就在同一段用一句白话说清它指什么（如「「勿用」是没人用，「利见」是有人肯见」）。
 
@@ -72,7 +72,7 @@ git clone git@github.com:swiftdo/yijing-yao-xpost.git <项目>/.workbuddy/skills
 
 之后在对话里直接说「乾卦九三」「坤卦初六」，或「帮我做一下 X 帖子的产出」「这一爻的知识卡片」。Agent 会按 `SKILL.md` 走完默认的 6 步（第 7 步「发布到 X」是可选、默认不执行）：
 
-1. **考据**：联网核对爻辞与《象》原文，**并写下两段的白话译文**（乾、坤才有《文言》，节引只留一句、标「……」）
+1. **考据**：联网核对爻辞与《象》原文，**并写下两段的白话译文**（乾、坤才有《文言》，节引只引一段、以「……」标明省略）
 2. **写帖子**：按硬规则，首行给全卦、爻、爻辞
 3. **核字数**：跑 `scripts/wlen.py`，超限删句，不扩写、不拆帖、不把译文挤进来
 4. **出卡片**：照示例 JSON 填一份配置（含 `trans1` / `trans2`），跑 `scripts/render_card.py`
@@ -95,6 +95,8 @@ git clone git@github.com:swiftdo/yijing-yao-xpost.git <项目>/.workbuddy/skills
 python3 -m pip install Pillow
 ```
 
+> 若报 `externally-managed-environment`（PEP 668，常见于 Homebrew／系统 Python），用装了 Pillow 的解释器跑脚本，或先建虚拟环境：`python3 -m venv .venv && .venv/bin/pip install Pillow`。
+
 **推荐装一个专用无头构建**（不与日常浏览器共用 profile，最快也最不会出事）：
 
 ```bash
@@ -105,11 +107,12 @@ npx --yes @puppeteer/browsers install chrome-headless-shell@stable
 
 1. `--chrome /path/to/browser` 参数
 2. `CHROME_BIN` 环境变量
-3. `PATH` 里的 `chrome-headless-shell` / `chromium` / `chromium-browser` / `google-chrome`
-4. puppeteer、playwright 缓存里的无头构建
-5. macOS 的 `Chromium.app` / `Google Chrome Canary.app` / `Google Chrome.app`
+3. puppeteer、playwright 缓存里的 `chrome-headless-shell` / `headless_shell`
+4. `PATH` 里的 `chrome-headless-shell` / `chromium` / `chromium-browser` / `google-chrome`
+5. playwright 缓存里的完整 Chromium
+6. macOS 的 `Chromium.app` / `Google Chrome Canary.app` / `Google Chrome.app`
 
-macOS 上第 5 步能直接命中 `Google Chrome.app`，**不需要再建 wrapper**。若你的机器上 Chrome 装在别处，用 `CHROME_BIN` 指过去即可：
+macOS 上最后一步能直接命中 `Google Chrome.app`，**不需要再建 wrapper**。若你的机器上 Chrome 装在别处，用 `CHROME_BIN` 指过去即可：
 
 ```bash
 CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
@@ -118,9 +121,9 @@ CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
 
 > **别给 Chrome.app 里的二进制建软链**：Chrome 会按自身路径去找 `Google Chrome Framework.framework`，软链会导致 `dlopen` 失败并以 SIGABRT 退出。要自定义路径就写个 `exec` 真路径的 wrapper 脚本，或用 `CHROME_BIN`。
 
-> **为什么每次渲染都用一个临时 profile**：脚本固定传 `--user-data-dir=<临时目录>/profile`。不隔离的话，无头进程会和正在运行的 Chrome 抢同一个 profile 的单例锁，触发 Chrome 的 CHECK 断言——表现就是**跑一次卡片，Chrome 崩一次**，崩溃报告里进程名还写着「Google Chrome」。详见 `references/conventions.md` 第 7 节第 9 条。
+> **为什么每次渲染都用一个临时 profile**：脚本固定传 `--user-data-dir=<临时目录>/profile`。不隔离的话，无头进程会和正在运行的 Chrome 抢同一个 profile 的单例锁，触发 Chrome 的 CHECK 断言——表现就是**跑一次卡片，Chrome 崩一次**，崩溃报告里进程名还写着「Google Chrome」。详见 `references/conventions.md` 第 7 节第 10 条。
 
-输出路径默认是 `/workspace/<配置里的 out>`（脚本会自动建目录）。在根目录不可写的机器上请显式传 `--out`，别用默认值：
+输出路径默认是 `out/<配置里的 out>`（相对当前目录，目录不存在会自动创建）。想换位置就显式传 `--out`：
 
 ```bash
 python3 scripts/render_card.py assets/example_93.json --out ./乾卦九三_知识卡片_封面.png
@@ -128,7 +131,7 @@ python3 scripts/render_card.py assets/example_93.json --out ./乾卦九三_知�
 
 ### 2. 核字数
 
-X 的 280 是**加权字符数**：ASCII 字符/换行算 1，CJK 汉字、中文标点、全角符号、emoji 算 2，纯中文帖实际约 140 字就到顶。
+X 的 280 是**加权字符数**：ASCII 字符/换行算 1，CJK 汉字、中文标点、全角符号、emoji 算 2，链接一律按 23 计（t.co 折算，不论长短），纯中文帖实际约 140 字就到顶。
 
 ```bash
 python3 scripts/wlen.py "乾 · 九二｜见龙在田，利见大人"
@@ -138,7 +141,7 @@ python3 scripts/wlen.py post.txt       # 也可传文件
 cat post.txt | python3 scripts/wlen.py -   # 或走 stdin
 ```
 
-超限（>280）时脚本返回非零退出码。`references/examples.md` 五条成例字数为 268（乾九二主推）、247（克制随笔版）、272（乾九三，见下方完整样例）、269（乾九四）、272（坤初六），均已实测。
+超限（>280）时脚本返回非零退出码。`references/examples.md` 五条帖子（四份成例）的字数为 268（乾九二主推）、245（克制随笔版）、272（乾九三，见下方完整样例）、269（乾九四）、272（坤初六），均已实测。
 
 ### 3. 出卡片
 
@@ -150,9 +153,9 @@ python3 scripts/render_card.py my_yao.json --out ./my_yao.png
 # 已生成: my_yao.png (1600x900)
 ```
 
-脚本会把配置填进 `card_template.html`，把底图与 HTML 放进同一临时目录，用 Chromium `--headless=new` 截 1600×1000 的图，最后 `crop(0,0,1600,900)` 输出 PNG。
+脚本会把配置填进 `card_template.html`，把底图与 HTML 放进同一临时目录，用 Chromium 系浏览器无头模式截 1600×1000 的图，最后 `crop(0,0,1600,900)` 输出 PNG。
 
-模板是「书叶」版式：细版框、上提的版心与留大的地脚，水墨只在左半叶透出；配色只有**纸／四级墨／朱砂**，朱砂严格只给本爻与朱印两处，其余层级靠墨色明度与字重。原文界栏走**古籍经注格式**——爻辞大字、《象》中字、《文言》一句，每段原文下方紧跟一行小字白话译文（原文墨1／墨2，译文统一墨3）。设计依据、借鉴出处（[alchaincyf/huashu-design](https://github.com/alchaincyf/huashu-design)）与改样式红线见 `references/card-design.md`，改 CSS 前先读。
+模板是「书叶」版式：细版框、上提的版心与留大的地脚，水墨只在左半叶透出；配色只有**纸／四级墨／朱砂**，朱砂严格只给本爻与朱印两处，其余层级靠墨色明度与字重。原文界栏走**古籍经注格式**——爻辞大字、《象》中字、《文言》一段，每段原文下方紧跟一行小字白话译文（原文墨1／墨2，译文统一墨3）。设计依据、借鉴出处（[alchaincyf/huashu-design](https://github.com/alchaincyf/huashu-design)）与改样式红线见 `references/card-design.md`，改 CSS 前先读。
 
 ### 4. 复检（别省）
 
@@ -214,16 +217,16 @@ python3 "$REPO/scripts/wlen.py" post.txt
 cp "$REPO/assets/example_93.json" card.json
 ```
 
-三个最容易填错的字段：
+四处最容易填错的地方：
 
 | 字段 | 本例取值 | 说明 |
 |---|---|---|
 | `hot_from_bottom` | `3` | 九三是自下而上第三爻，朱红高亮落在这条 |
 | `yao_lines` | 6 行，全 `yin: false` | 乾卦六阳爻；数组按**从上到下**排列，脚本自动在第 3 行后插分界线 |
 | `trans1` / `trans2` | 各一句白话 | **必填**：爻辞与《象》的译文，各自压在一行内（约 40 字以内） |
-| `src3` | 《文言》一句 | 只留一句、须一行内；非乾、坤两卦填 `[]` |
+| `src3` | 《文言》一段 | 只引一段（≤30 字、一行内，可用「……」省去中间）；非乾、坤两卦填 `[]` |
 
-译文是这份改动里最容易做坏的地方：它不是「概括」，必须逐句对应原文。九三的「终日乾乾，夕惕若厉，无咎」如果翻成「要努力奋斗」就错了——「乾乾」是勤勉不懈、不是打鸡血，「夕惕若厉」是夜间戒惧如临险境。填法是**先按字义直译，再顺成口语**，别先顺口再倒推字义。
+译文是卡片里最容易做坏的地方：它不是「概括」，必须逐句对应原文。九三的「终日乾乾，夕惕若厉，无咎」如果翻成「要努力奋斗」就错了——「乾乾」是勤勉不懈、不是打鸡血，「夕惕若厉」是夜间戒惧如临险境。填法是**先按字义直译，再顺成口语**，别先顺口再倒推字义。
 
 **4 · 渲染**
 
@@ -232,7 +235,7 @@ python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
 # 已生成: card.png (1600x900)
 ```
 
-> 本机 macOS 实测时默认 `python3` 没有 Pillow，请用 `/opt/homebrew/bin/python3`。浏览器不用额外配——脚本会自己找到 `Google Chrome.app`；装了 `chrome-headless-shell` 则优先用它。等价的实测命令：
+> 若默认 `python3` 没有 Pillow（本机 WorkBuddy 内置的 3.13 就没有），改用 `/opt/homebrew/bin/python3`。浏览器不用额外配——脚本会自己找到 `Google Chrome.app`；装了 `chrome-headless-shell` 则优先用它。等价的实测命令：
 >
 > ```bash
 > /opt/homebrew/bin/python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
@@ -246,9 +249,9 @@ python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
 # (1600, 900)
 ```
 
-打开 `card.png` 逐项确认：朱砂落在九三（虚线分界下方第一条）而其余五爻为墨色；朱砂除本爻外只出现在右上角朱印；原文区五行齐备（爻辞→译文→《象》→译文→《文言》一句），两条译文都只有一行、与各自原文逐句对应；底部「对照：九二… → 九三…」完整、不与三条要点重叠；中文无方框乱码。本例均通过。
+打开 `card.png` 逐项确认：朱砂落在九三（虚线分界下方第一条）而其余五爻为墨色；朱砂除本爻外只出现在右上角朱印；原文区五行齐备（爻辞→译文→《象》→译文→《文言》一段），两条译文都只有一行、与各自原文逐句对应；底部「对照：九二… → 九三…」完整、不与三条要点重叠；中文无方框乱码。本例均通过。
 
-**6 · 交付**：把 `post.txt` 全文复制进 X 编辑框，`card.png` 作为附图上传。**默认流程到此结束。** 实测产物：`post.txt` 405 B、`card.json` 1.5 KiB、`card.png` 0.87 MiB。
+**6 · 交付**：把 `post.txt` 全文复制进 X 编辑框，`card.png` 作为附图上传。**默认流程到此结束。** 实测产物：`post.txt` 405 B、`card.json` 1.5 KiB、`card.png` 0.88 MiB。
 
 **7 ·（可选）发布前先 dry-run**
 
@@ -261,7 +264,7 @@ python3 "$REPO/scripts/publish_x.py" --text-file post.txt --image ./card.png
 （此处原样打印 post.txt 全文）
 --------------------
 加权字符：272 / 280（X 按 CJK 每字 2 计）
-附图：card.png（0.87 MiB）
+附图：card.png（0.88 MiB）
 [dry-run] 检查通过：长度 OK / 图片 OK / 未读取凭证 / 未联网
 [dry-run] 将执行：users/me 校验（可选）→ 媒体上传 → POST /2/tweets → 回读
 [dry-run] 没有发送任何内容。人工确认后加 --send 才会发布。
@@ -284,11 +287,11 @@ python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
 |---|---|---|
 | `hot_from_bottom` | `3` | `1`（初爻） |
 | `yao_lines[].yin` | 全 `false` | 全 `true`（阴爻画成断开两段） |
-| `src3` | 《文言》一句 | 《文言》一句（坤卦也有，其余卦填 `[]`） |
+| `src3` | 《文言》一段 | 《文言》一段（坤卦也有，其余卦填 `[]`） |
 | `bottom` | 「九二 → 九三」对照 | 乾坤对举「乾初九『潜龙勿用』 → 坤初六『履霜』」——**初爻没有前爻，别捏造** |
 | `tag` / `title` / `src1` / `src2` / `trans1` / `trans2` / `points` | 九三原文、译文与解读 | 初六原文、译文与解读 |
 
-帖子照 `references/examples.md` 例 3 重写（262 加权字符），再跑一次 `wlen.py` 与 `render_card.py`。
+帖子照 `references/examples.md` 例 3 重写（272 加权字符），再跑一次 `wlen.py` 与 `render_card.py`。
 
 ## 可选 · 发布到 X
 
@@ -297,7 +300,7 @@ python3 "$REPO/scripts/render_card.py" card.json --out ./card.png
 沿用完整样例的 `post.txt` 与 `card.png`（在仓库根目录运行时把 `$REPO/scripts/` 换成 `scripts/`）：
 
 ```bash
-# 1. 首次一次性授权，拿用户级 OAuth 2.0 token（tweet.write / users.read / media.write / offline.access）
+# 1. 首次一次性授权，拿用户级 OAuth 2.0 token（tweet.read / tweet.write / users.read / media.write / offline.access）
 export X_ACCESS_TOKEN='<token>'
 
 # 2. 预览：不联网、不读凭证、不发送（同完整样例第 7 步）
@@ -307,18 +310,18 @@ python3 "$REPO/scripts/publish_x.py" --text-file post.txt --image ./card.png
 python3 "$REPO/scripts/publish_x.py" --text-file post.txt --image ./card.png --send --expect-user your_handle
 ```
 
-`publish_x.py` 零第三方依赖，复用 `wlen.py` 校验 ≤280 加权字符（超限拒绝、不截断），走 v2 分块媒体上传 → `POST /2/tweets` → 回读逐字比对；发帖失败不自动重试，避免重复发布。**真实发送路径尚未用真实账号验证**（需要凭证，且调用有费用），发布前务必读一遍 `publishing.md` 的门禁与错误表。
+`publish_x.py` 零第三方依赖，复用 `wlen.py` 校验 ≤280 加权字符（超限拒绝、不截断），走 v2 分块媒体上传 → `POST /2/tweets` → 回读逐字比对；`--send` 必须同时给 `--expect-user`，缺了直接拒绝；发帖失败不自动重试，避免重复发布。**真实发送路径尚未用真实账号验证**（需要凭证，且调用有费用），发布前务必读一遍 `publishing.md` 的门禁与错误表。
 
 ## 配置字段速查
 
 | 区域 | 字段 | 说明 |
 |---|---|---|
-| 输出 | `out` | 文件名；不传 `--out` 时写到 `/workspace/<out>` |
+| 输出 | `out` | 文件名；不传 `--out` 时写到 `out/<out>`（相对当前目录） |
 | 左栏 | `gua_label`, `guaxiang`, `split_label`, `foot1`, `foot2` | 卦名与卦序、卦象说明、上下卦分界线文字、两行位置注记（`foot2` 可用 `<b>`） |
 | 右栏 | `tag`, `seal`, `title`, `src1`, `trans1`, `src2`, `trans2`, `src3`, `points`, `bottom` | 标签、朱印单字、两行爻辞标题、爻辞、爻辞译文、《象》、《象》译文、《文言》节引、三条「所处之位」、对照行 |
 | 卦图 | `yao_lines`, `hot_from_bottom`, `hot_note` | 六行爻（**自上而下**，含 `name` / `yin` / `note`）、本爻自下而上第几爻（1～6）、本爻标注 |
 
-要点：`src1` / `trans1` / `src2` / `trans2` 都是单行字符串，`trans1` 缺失脚本会直接报错退出（译文是必需项）；`src3` 是数组，但**只放一句**（无《文言》时填 `[]`，模板自动省略该行）。配置里只允许 `<b>`、`<br>` 这类简单 HTML。脚本用 `i == 6 - hot_from_bottom` 定位高亮，并在配置第 3 行之后插入上下卦虚线分界。
+要点：`src1` / `trans1` / `src2` / `trans2` 都是单行字符串，`trans1`、`trans2` 缺失脚本会直接报错退出（有《象》就必须给它的译文；`src2` 缺省时 `trans2` 可省）；`src3` 是数组，但**只放一段**（≤30 字，可用「……」；无《文言》时填 `[]`，模板自动省略该行）。配置里只允许 `<b>`、`<br>` 这类简单 HTML。脚本用 `i == 6 - hot_from_bottom` 定位高亮，并在配置第 3 行之后插入上下卦虚线分界。
 
 四份示例配置刻意覆盖了易错场景，换卦时挑最接近的一份改：
 

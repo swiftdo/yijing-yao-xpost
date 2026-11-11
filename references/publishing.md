@@ -65,7 +65,7 @@ token 过期后用 refresh token 重新换取；不要把刷新逻辑塞进生�
 ```bash
 # 帖子存成纯文本文件（首行、正文、标签一并保留；不写看图提示）
 python3 scripts/wlen.py post.txt                     # 必须 ≤280，建议 ≤275
-# 卡片渲染到可写路径（本机 / 不可写，别用 SKILL.md 里默认的 /workspace）
+# 卡片渲染到可写路径（默认 out/ 也可以；换位置就显式传 --out）
 python3 scripts/render_card.py assets/example_93.json --out ./card.png
 ```
 
@@ -87,6 +87,8 @@ python3 scripts/publish_x.py --text-file post.txt --image ./card.png
 python3 scripts/publish_x.py --text-file post.txt --image ./card.png \
   --send --expect-user your_handle
 ```
+
+`--send` 不带 `--expect-user` 会被脚本直接拒绝——不校验账号就不发。
 
 内部顺序（对应官方样例）：
 
@@ -116,7 +118,7 @@ python3 scripts/publish_x.py --text-file post.txt --image ./card.png \
 
 | 现象 | 处理 |
 |---|---|
-| 401 / 403 | token 过期或 scope 不全；重新走 PKCE 授权，确认 `tweet.write`、`media.write`、`users.read` |
+| 401 / 403 | token 过期或 scope 不全；重新走 PKCE 授权，确认 `tweet.read`、`tweet.write`、`media.write`、`users.read` |
 | 媒体上传 403 / 401 | 缺 `media.write`；或误用了 v1.1 上传端点，改用 `POST /2/media/upload` |
 | 429 | 已限流；**不要自动重试**，先查账号上是否已有该帖 |
 | 媒体 `processing_info.state = failed` | 重新上传图片后再发，此时尚未建帖，重试安全 |
