@@ -16,6 +16,7 @@
 
   改样式时务必保留：.bar.yin.hot 的透明底规则（否则朱红阴爻会变成整条实线）；
   两栏内容总高须压在内容区内，底部对照行不能用绝对定位（会与要点重叠）。
+  译文允许折行：实测各两行仍放得下；译文与《文言》节引同时折行就会顶破（见 references/card-design.md 第 7 节）。
   设计说明见 references/card-design.md。
 -->
 <style>
@@ -124,11 +125,11 @@
     border: 2px solid rgba(247,241,230,.5);
   }
   .title {
-    margin-top: 14px; font-size: 62px; line-height: 1.26;
+    margin-top: 10px; font-size: 62px; line-height: 1.26;
     letter-spacing: -.01em; color: var(--ink); font-weight: 600;
     text-wrap: balance;
   }
-  .rule { height: 1px; background: var(--hair); margin: 15px 0 13px; }
+  .rule { height: 1px; background: var(--hair); margin: 12px 0 10px; }
   /* 书眉式小标题：正常中文字距 + 一道界栏细线，不用拉开的模板标签 */
   .label {
     display: flex; align-items: center; gap: 14px;
@@ -145,21 +146,21 @@
   .src1 { font-size: 32px; letter-spacing: .01em; color: var(--ink); line-height: 1.45; }
   .trans1 {
     font-size: 19px; line-height: 1.7; color: var(--ink-3);
-    letter-spacing: .01em; margin-top: 7px; text-wrap: pretty;
+    letter-spacing: .01em; margin-top: 5px; text-wrap: pretty;
   }
-  .src2 { font-size: 24px; color: var(--ink-2); margin-top: 11px; letter-spacing: .01em; }
+  .src2 { font-size: 24px; color: var(--ink-2); margin-top: 8px; letter-spacing: .01em; }
   .trans2 {
     font-size: 18px; line-height: 1.7; color: var(--ink-3);
     letter-spacing: .01em; margin-top: 3px; text-wrap: pretty;
   }
   /* 《文言》仍是原文，比译文深一档，只靠字号区分子级 */
-  .src3 { font-size: 20px; color: var(--ink-2); line-height: 1.62; margin-top: 9px; text-wrap: pretty; }
-  .pos { margin-top: 16px; }
+  .src3 { font-size: 20px; color: var(--ink-2); line-height: 1.62; margin-top: 7px; text-wrap: pretty; }
+  .pos { margin-top: 12px; }
   .points { font-size: 24px; line-height: 1.78; color: var(--ink-2); }
   .points div { white-space: nowrap; }
   .points span { color: var(--ink-4); margin-right: 14px; }
   .bottom {
-    margin-top: 22px; padding-top: 14px;
+    margin-top: 16px; padding-top: 12px;
     border-top: 1px solid var(--hair);
     font-size: 20px; letter-spacing: .02em; color: var(--ink-3);
   }
