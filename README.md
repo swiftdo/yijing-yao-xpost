@@ -143,7 +143,7 @@ python3 scripts/wlen.py post.txt       # 也可传文件
 cat post.txt | python3 scripts/wlen.py -   # 或走 stdin
 ```
 
-超限（>280）时脚本返回非零退出码。`references/examples.md` 五条帖子（四份成例）的字数为 274（乾九二主推）、245（克制随笔版）、269（乾九三，见下方完整样例）、269（乾九四）、272（坤初六），均已实测。
+超限（>280）时脚本返回非零退出码。`references/examples.md` 六条帖子（五份成例）的字数为 274（乾九二主推）、245（克制随笔版）、269（乾九三，见下方完整样例）、269（乾九四）、272（坤初六）、274（坤六三），均已实测。
 
 ### 3. 出卡片
 
@@ -324,7 +324,7 @@ python3 "$REPO/scripts/publish_x.py" --text-file post.txt --image ./card.png --s
 
 要点：`src1` / `trans1` / `src2` / `trans2` 都是单个字符串，`trans1`、`trans2` 缺失脚本会直接报错退出（有《象》就必须给它的译文；`src2` 缺省时 `trans2` 可省）；`src3` 是数组，但**只放一段**（用「……」标明省略；无《文言》时填 `[]`，模板自动省略该行）。配置里只允许 `<b>`、`<br>` 这类简单 HTML。脚本用 `i == 6 - hot_from_bottom` 定位高亮，并在配置第 3 行之后插入上下卦虚线分界。
 
-四份示例配置刻意覆盖了易错场景，换卦时挑最接近的一份改：
+五份示例配置刻意覆盖了易错场景，换卦时挑最接近的一份改：
 
 | 配置 | 覆盖 |
 |---|---|
@@ -332,6 +332,7 @@ python3 "$REPO/scripts/publish_x.py" --text-file post.txt --image ./card.png --s
 | `example_93.json` | 阳爻、下卦之上危地、有《文言》且引文直接讲爻位 |
 | `example_94.json` | 阳爻、上卦之下（重刚不中、故「或」）、有《文言》、标题只四字 |
 | `example_kun_chuliu.json` | 全阴爻（断开两段）、本爻即初爻（无前爻，改用乾坤对举）、坤卦有《文言》 |
+| `example_kun_liusan.json` | 阴爻、下卦之上（进退之际）、对照行正常对举、译文放开到两行 |
 
 ## 改卦前必读
 

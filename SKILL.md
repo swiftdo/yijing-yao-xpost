@@ -67,9 +67,9 @@ description: 为《周易》某一卦某一爻生成可直发的 X（推特）�
 
 - `references/conventions.md` — 完整约定、风格细则、易学考据规则、任意卦的填写法
 - `references/card-design.md` — 卡片视觉依据：借鉴来源、色彩推导、排印规则、改样式红线
-- `references/examples.md` — 乾九二、乾九三、坤初六、乾九四 的完整成例
+- `references/examples.md` — 乾九二、乾九三、坤初六、乾九四、坤六三 的完整成例
 - `references/publishing.md` — 可选的 X 发布流程（GitHub 参考实现、授权与凭证、确认门禁、失败处理）
 - `scripts/wlen.py` — X 加权字数核算
 - `scripts/render_card.py` — 通用卡片生成器（读配置 → HTML → Chromium → 裁切）
 - `scripts/publish_x.py` — 可选发布脚本，默认 dry-run，显式 `--send` 才真发
-- `assets/card_template.html`、`assets/ink_bg.png`、`assets/example_92.json`、`assets/example_93.json`、`assets/example_94.json`、`assets/example_kun_chuliu.json`
+- `assets/card_template.html`、`assets/ink_bg.png`、`assets/example_92.json`、`assets/example_93.json`、`assets/example_94.json`、`assets/example_kun_chuliu.json`、`assets/example_kun_liusan.json`

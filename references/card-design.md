@@ -106,13 +106,13 @@
 
 ```bash
 # 本机用 homebrew python（默认 python3 无 Pillow）；浏览器脚本自行查找，无需 wrapper
-for cfg in example_93 example_92 example_kun_chuliu example_94; do
+for cfg in example_93 example_92 example_kun_chuliu example_94 example_kun_liusan; do
   /opt/homebrew/bin/python3 scripts/render_card.py \
     "assets/$cfg.json" --out "/tmp/${cfg}.png"
 done
 ```
 
-看四件事：本爻朱红在正确爻位（坤初六要断成两段）、底部对照行完整不重叠、中文无乱码方框、无明显溢出。四份示例刻意覆盖阳爻危地／阳爻得中／阴爻初爻且无前爻／阳爻临界。
+看四件事：本爻朱红在正确爻位（坤初六要断成两段）、底部对照行完整不重叠、中文无乱码方框、无明显溢出。五份示例刻意覆盖阳爻危地／阳爻得中／阴爻初爻且无前爻／阳爻临界／阴爻下卦之上。
 
 ## 9. 没有采纳的方向
 
